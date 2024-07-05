@@ -22,8 +22,8 @@ impl From<Entry> for write::Entry {
         let password = (!entry.password.is_empty()).then_some(entry.password);
 
         let expires = match entry.expires.parse::<u32>() {
-            Ok(0) | Err(_) => None,
-            Ok(secs) => Some(secs),
+            Ok(0) | Err(_) => 0,
+            Ok(secs) => secs,
         };
 
         Self {

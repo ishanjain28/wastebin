@@ -83,7 +83,7 @@ pub mod write {
         /// File extension
         pub extension: Option<String>,
         /// Expiration in seconds from now
-        pub expires: Option<u32>,
+        pub expires: u32,
         /// Delete if read
         pub burn_after_reading: Option<bool>,
         /// User identifier that inserted the entry
@@ -257,22 +257,18 @@ impl Database {
         let id = id.as_u32();
         let write::DatabaseEntry { entry, data, nonce } = entry.compress().await?.encrypt().await?;
 
-        spawn_blocking(move || match entry.expires {
-            None => conn.lock().execute(
-                "INSERT INTO entries (id, uid, data, burn_after_reading, nonce) VALUES (?1, ?2, ?3, ?4, ?5)",
-                params![id, entry.uid, data, entry.burn_after_reading, nonce],
-            ),
-            Some(expires) => conn.lock().execute(
-                "INSERT INTO entries (id, uid, data, burn_after_reading, nonce, expires) VALUES (?1, ?2, ?3, ?4, ?5, datetime('now', ?6))",
-                params![
-                    id,
-                    entry.uid,
-                    data,
-                    entry.burn_after_reading,
-                    nonce,
-                    format!("{expires} seconds")
-                ],
-            ),
+        spawn_blocking(move || {
+            conn.lock().execute(
+            "INSERT INTO entries (id, uid, data, burn_after_reading, nonce, expires) VALUES (?1, ?2, ?3, ?4, ?5, datetime('now', ?6))",
+            params![
+                id,
+                entry.uid,
+                data,
+                entry.burn_after_reading,
+                nonce,
+                format!("{} seconds",entry.expires)
+            ],
+            )
         })
         .await??;
 
@@ -404,7 +400,7 @@ mod tests {
         let db = new_db()?;
 
         let entry = write::Entry {
-            expires: Some(1),
+            expires: 1,
             ..Default::default()
         };
 

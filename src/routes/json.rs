@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 pub struct Entry {
     pub text: String,
     pub extension: Option<String>,
-    pub expires: Option<u32>,
+    pub expires: u32,
     pub burn_after_reading: Option<bool>,
     pub password: Option<String>,
 }
